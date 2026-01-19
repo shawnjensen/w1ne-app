@@ -2394,11 +2394,11 @@ function EntityDetailModal({ entity, onClose, onBookmark, currentUser }) {
 function AgeGateWithRegion({ onVerified, onShowAuth }) {
   const [step, setStep] = useState(1); // 1: age, 2: region
   const [selectedRegion, setSelectedRegion] = useState('');
-
+  
   function handleAgeVerified() {
     setStep(2);
   }
-
+  
   function handleRegionSelected() {
     if (!selectedRegion) {
       alert('Please select your region');
@@ -2406,31 +2406,31 @@ function AgeGateWithRegion({ onVerified, onShowAuth }) {
     }
     onVerified(selectedRegion);
   }
-
+  
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white text-black flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center">
         {/* W1NE Logo */}
         <div className="mb-8">
-          <Wine className="w-20 h-20 mx-auto mb-4" />
-          <h1 className="text-5xl font-bold">W1NE</h1>
+          <Wine className="w-20 h-20 mx-auto mb-4 text-black" />
+          <h1 className="text-5xl font-bold text-black">W1NE</h1>
         </div>
-
+        
         {step === 1 ? (
           // Age Verification Step
           <>
-            <p className="text-xl mb-8">Welcome! Please verify your age or sign in.</p>
+            <p className="text-xl mb-8 text-gray-700">Welcome! Please verify your age or sign in.</p>
             
             <button
               onClick={handleAgeVerified}
-              className="w-full px-8 py-4 bg-white text-black rounded-xl font-bold text-lg hover:bg-gray-100 transition mb-4"
+              className="w-full px-8 py-4 bg-black text-white rounded-xl font-bold text-lg hover:bg-gray-800 transition mb-4"
             >
               I am 18+
             </button>
-
+            
             <button
               onClick={onShowAuth}
-              className="w-full px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl font-bold text-lg hover:bg-white hover:text-black transition"
+              className="w-full px-8 py-4 bg-transparent border-2 border-black text-black rounded-xl font-bold text-lg hover:bg-black hover:text-white transition"
             >
               Sign In
             </button>
@@ -2438,12 +2438,12 @@ function AgeGateWithRegion({ onVerified, onShowAuth }) {
         ) : (
           // Region Selection Step
           <>
-            <p className="text-xl mb-8">Select your region</p>
+            <p className="text-xl mb-8 text-gray-700">Select your region</p>
             
             <select
               value={selectedRegion}
               onChange={(e) => setSelectedRegion(e.target.value)}
-              className="w-full px-4 py-3 bg-white text-black rounded-xl mb-6 text-lg"
+              className="w-full px-4 py-3 bg-white text-black border-2 border-gray-300 rounded-xl mb-6 text-lg focus:border-black focus:outline-none"
             >
               <option value="">Select Your Region</option>
               <option value="CH">🇨🇭 Switzerland</option>
@@ -2460,35 +2460,35 @@ function AgeGateWithRegion({ onVerified, onShowAuth }) {
               <option value="AR">🇦🇷 Argentina</option>
               <option value="CL">🇨🇱 Chile</option>
             </select>
-
+            
             <button
               onClick={handleRegionSelected}
-              className="w-full px-8 py-4 bg-white text-black rounded-xl font-bold text-lg hover:bg-gray-100 transition"
+              className="w-full px-8 py-4 bg-black text-white rounded-xl font-bold text-lg hover:bg-gray-800 transition mb-4"
             >
               Continue
             </button>
-
+            
             <button
               onClick={() => setStep(1)}
-              className="w-full px-4 py-2 mt-4 text-gray-400 hover:text-white transition"
+              className="w-full px-4 py-2 text-gray-500 hover:text-black transition"
             >
               ← Back
             </button>
           </>
         )}
-
+        
         {/* Footer Links */}
-        <div className="mt-12 pt-8 border-t border-gray-800 text-sm text-gray-400">
+        <div className="mt-12 pt-8 border-t border-gray-200 text-sm text-gray-600">
           <div className="flex flex-wrap justify-center gap-4">
-            <a href="#about" className="hover:text-white transition">About Us</a>
+            <a href="#about" className="hover:text-black transition">About Us</a>
             <span>•</span>
-            <a href="#impressum" className="hover:text-white transition">Impressum</a>
+            <a href="#impressum" className="hover:text-black transition">Impressum</a>
             <span>•</span>
-            <a href="#privacy" className="hover:text-white transition">Privacy Policy</a>
+            <a href="#privacy" className="hover:text-black transition">Privacy Policy</a>
             <span>•</span>
-            <a href="#cookies" className="hover:text-white transition">Cookie Policy</a>
+            <a href="#cookies" className="hover:text-black transition">Cookie Policy</a>
             <span>•</span>
-            <a href="#terms" className="hover:text-white transition">Terms of Use</a>
+            <a href="#terms" className="hover:text-black transition">Terms of Use</a>
           </div>
         </div>
       </div>

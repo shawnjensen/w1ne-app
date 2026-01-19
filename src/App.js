@@ -2408,90 +2408,109 @@ function AgeGateWithRegion({ onVerified, onShowAuth }) {
   }
   
   return (
-    <div className="min-h-screen bg-white text-black flex items-center justify-center p-4">
-      <div className="max-w-md w-full text-center">
-        {/* W1NE Logo */}
-        <div className="mb-8">
-          <Wine className="w-20 h-20 mx-auto mb-4 text-black" />
-          <h1 className="text-5xl font-bold text-black">W1NE</h1>
-        </div>
-        
-        {step === 1 ? (
-          // Age Verification Step
-          <>
-            <p className="text-xl mb-8 text-gray-700">Welcome! Please verify your age or sign in.</p>
-            
-            <button
-              onClick={handleAgeVerified}
-              className="w-full px-8 py-4 bg-black text-white rounded-xl font-bold text-lg hover:bg-gray-800 transition mb-4"
-            >
-              I am 18+
-            </button>
-            
-            <button
-              onClick={onShowAuth}
-              className="w-full px-8 py-4 bg-transparent border-2 border-black text-black rounded-xl font-bold text-lg hover:bg-black hover:text-white transition"
-            >
-              Sign In
-            </button>
-          </>
-        ) : (
-          // Region Selection Step
-          <>
-            <p className="text-xl mb-8 text-gray-700">Select your region</p>
-            
-            <select
-              value={selectedRegion}
-              onChange={(e) => setSelectedRegion(e.target.value)}
-              className="w-full px-4 py-3 bg-white text-black border-2 border-gray-300 rounded-xl mb-6 text-lg focus:border-black focus:outline-none"
-            >
-              <option value="">Select Your Region</option>
-              <option value="CH">🇨🇭 Switzerland</option>
-              <option value="US">🇺🇸 United States</option>
-              <option value="FR">🇫🇷 France</option>
-              <option value="IT">🇮🇹 Italy</option>
-              <option value="ES">🇪🇸 Spain</option>
-              <option value="DE">🇩🇪 Germany</option>
-              <option value="AT">🇦🇹 Austria</option>
-              <option value="UK">🇬🇧 United Kingdom</option>
-              <option value="AU">🇦🇺 Australia</option>
-              <option value="NZ">🇳🇿 New Zealand</option>
-              <option value="ZA">🇿🇦 South Africa</option>
-              <option value="AR">🇦🇷 Argentina</option>
-              <option value="CL">🇨🇱 Chile</option>
-            </select>
-            
-            <button
-              onClick={handleRegionSelected}
-              className="w-full px-8 py-4 bg-black text-white rounded-xl font-bold text-lg hover:bg-gray-800 transition mb-4"
-            >
-              Continue
-            </button>
-            
-            <button
-              onClick={() => setStep(1)}
-              className="w-full px-4 py-2 text-gray-500 hover:text-black transition"
-            >
-              ← Back
-            </button>
-          </>
-        )}
-        
-        {/* Footer Links */}
-        <div className="mt-12 pt-8 border-t border-gray-200 text-sm text-gray-600">
-          <div className="flex flex-wrap justify-center gap-4">
-            <a href="#about" className="hover:text-black transition">About Us</a>
-            <span>•</span>
-            <a href="#impressum" className="hover:text-black transition">Impressum</a>
-            <span>•</span>
-            <a href="#privacy" className="hover:text-black transition">Privacy Policy</a>
-            <span>•</span>
-            <a href="#cookies" className="hover:text-black transition">Cookie Policy</a>
-            <span>•</span>
-            <a href="#terms" className="hover:text-black transition">Terms of Use</a>
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Header matching app style */}
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
+          <div className="flex items-center gap-3">
+            <Wine className="w-8 h-8 text-black" />
+            <h1 className="text-2xl font-bold text-black">W1NE</h1>
           </div>
         </div>
-      </div>
+      </header>
+
+      {/* Main content centered */}
+      <main className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="max-w-md w-full">
+          {step === 1 ? (
+            // Age Verification Step
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to W1NE</h2>
+              <p className="text-gray-600 mb-8">Please verify your age or sign in to continue.</p>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={handleAgeVerified}
+                  className="w-full px-6 py-4 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition"
+                >
+                  I am 18+
+                </button>
+                
+                <button
+                  onClick={onShowAuth}
+                  className="w-full px-6 py-4 bg-white text-black border-2 border-gray-200 rounded-xl font-semibold hover:border-gray-300 hover:bg-gray-50 transition"
+                >
+                  Sign In
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Region Selection Step
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
+              <button
+                onClick={() => setStep(1)}
+                className="flex items-center gap-2 text-gray-600 hover:text-black mb-6 transition"
+              >
+                <ChevronRight className="w-4 h-4 rotate-180" />
+                Back
+              </button>
+              
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Select Your Region</h2>
+              <p className="text-gray-600 mb-6">Choose your location to get started.</p>
+              
+              <div className="space-y-4">
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  className="w-full px-4 py-3 bg-white text-gray-900 border-2 border-gray-200 rounded-xl text-base focus:border-black focus:outline-none hover:border-gray-300 transition"
+                >
+                  <option value="">Select Your Region</option>
+                  <option value="CH">🇨🇭 Switzerland</option>
+                  <option value="US">🇺🇸 United States</option>
+                  <option value="FR">🇫🇷 France</option>
+                  <option value="IT">🇮🇹 Italy</option>
+                  <option value="ES">🇪🇸 Spain</option>
+                  <option value="DE">🇩🇪 Germany</option>
+                  <option value="AT">🇦🇹 Austria</option>
+                  <option value="UK">🇬🇧 United Kingdom</option>
+                  <option value="AU">🇦🇺 Australia</option>
+                  <option value="NZ">🇳🇿 New Zealand</option>
+                  <option value="ZA">🇿🇦 South Africa</option>
+                  <option value="AR">🇦🇷 Argentina</option>
+                  <option value="CL">🇨🇱 Chile</option>
+                </select>
+                
+                <button
+                  onClick={handleRegionSelected}
+                  className="w-full px-6 py-4 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition"
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Footer matching app style */}
+      <footer className="bg-gray-50 border-t border-gray-200 py-6">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
+            <a href="#about" className="hover:text-black transition">About Us</a>
+            <span className="text-gray-300">•</span>
+            <a href="#impressum" className="hover:text-black transition">Impressum</a>
+            <span className="text-gray-300">•</span>
+            <a href="#privacy" className="hover:text-black transition">Privacy Policy</a>
+            <span className="text-gray-300">•</span>
+            <a href="#cookies" className="hover:text-black transition">Cookie Policy</a>
+            <span className="text-gray-300">•</span>
+            <a href="#terms" className="hover:text-black transition">Terms of Use</a>
+          </div>
+          <div className="text-center mt-4 text-xs text-gray-400">
+            © 2026 W1NE. All rights reserved.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

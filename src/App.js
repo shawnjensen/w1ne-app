@@ -45,70 +45,89 @@ if (typeof window !== "undefined" && !window.storage) {
   };
 }
 
-function checkUserSession() {
-  const user = localStorage.getItem('w1ne_user');
-  const verified = localStorage.getItem('w1ne_age_verified');
-  const region = localStorage.getItem('w1ne_selected_region');
-  
-  if (user) {
-    try {
-      const userData = JSON.parse(user);
-      setCurrentUser(userData);
-      
-      // If user exists and has age/region, skip age gate
-      if (userData.ageVerified && userData.region) {
-        setSelectedRegion(userData.region);
-        setShowAgeGate(false);
-      } else if (verified && region) {
-        setSelectedRegion(region);
-        setShowAgeGate(false);
-      } else {
+function App() {
+  // State declarations
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAgeGate, setShowAgeGate] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState(null);
+  const [view, setView] = useState('chat');
+  const [staticPage, setStaticPage] = useState(null);
+
+  // Add Tailwind CSS
+  useEffect(() => {
+    if (!document.getElementById('tailwind-css')) {
+      const script = document.createElement('script');
+      script.id = 'tailwind-css';
+      script.src = 'https://cdn.tailwindcss.com';
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  // Call checkUserSession on mount
+  useEffect(() => {
+    checkUserSession();
+  }, []);
+
+  // Helper functions (moving them inside App so they have access to state)
+  function checkUserSession() {
+    const user = localStorage.getItem('w1ne_user');
+    const verified = localStorage.getItem('w1ne_age_verified');
+    const region = localStorage.getItem('w1ne_selected_region');
+    
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        setCurrentUser(userData);
+        
+        if (userData.ageVerified && userData.region) {
+          setSelectedRegion(userData.region);
+          setShowAgeGate(false);
+        } else if (verified && region) {
+          setSelectedRegion(region);
+          setShowAgeGate(false);
+        } else {
+          setShowAgeGate(true);
+        }
+      } catch (e) {
+        console.error('Error parsing user:', e);
         setShowAgeGate(true);
       }
-    } catch (e) {
-      console.error('Error parsing user:', e);
+    } else if (!verified) {
       setShowAgeGate(true);
+    } else if (region) {
+      setSelectedRegion(region);
     }
-  } else if (!verified) {
-    setShowAgeGate(true);
-  } else if (region) {
-    setSelectedRegion(region);
   }
-}
 
   function handleAgeVerified(region) {
-  localStorage.setItem('w1ne_age_verified', 'true');
-  localStorage.setItem('w1ne_selected_region', region);
-  
-  // Update user if logged in
-  if (currentUser) {
-    const updatedUser = {
-      ...currentUser,
-      ageVerified: true,
-      region: region
-    };
-    setCurrentUser(updatedUser);
-    localStorage.setItem('w1ne_user', JSON.stringify(updatedUser));
+    localStorage.setItem('w1ne_age_verified', 'true');
+    localStorage.setItem('w1ne_selected_region', region);
+    
+    if (currentUser) {
+      const updatedUser = {
+        ...currentUser,
+        ageVerified: true,
+        region: region
+      };
+      setCurrentUser(updatedUser);
+      localStorage.setItem('w1ne_user', JSON.stringify(updatedUser));
+    }
+    
+    setSelectedRegion(region);
+    setShowAgeGate(false);
   }
-  
-  setSelectedRegion(region);
-  setShowAgeGate(false);
-}
 
   function handleSignOut() {
-    // Clear all user data
     localStorage.removeItem("w1ne_user");
     localStorage.removeItem("w1ne_age_verified");
     localStorage.removeItem("w1ne_selected_region");
     localStorage.removeItem("w1ne_mock_code");
-
-    // Reset all state
     setCurrentUser(null);
     setSelectedRegion(null);
     setShowAgeGate(true);
     setView("chat");
   }
-
   if (showAgeGate) {
   return (
     <AgeGateWithRegion 

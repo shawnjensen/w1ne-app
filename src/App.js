@@ -45,49 +45,55 @@ if (typeof window !== "undefined" && !window.storage) {
   };
 }
 
-function App() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showAgeGate, setShowAgeGate] = useState(false);
-  const [selectedRegion, setSelectedRegion] = useState(null);
-  const [view, setView] = useState("chat"); // Chat is the landing page
-
-  // Add Tailwind CSS
-  useEffect(() => {
-    // Add Tailwind CSS if not already loaded
-    if (!document.getElementById("tailwind-css")) {
-      const script = document.createElement("script");
-      script.id = "tailwind-css";
-      script.src = "https://cdn.tailwindcss.com";
-      document.head.appendChild(script);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkUserSession();
-  }, []);
-
-  function checkUserSession() {
-    const user = localStorage.getItem("w1ne_user");
-    const verified = localStorage.getItem("w1ne_age_verified");
-    const region = localStorage.getItem("w1ne_selected_region");
-
-    if (!verified) {
+function checkUserSession() {
+  const user = localStorage.getItem('w1ne_user');
+  const verified = localStorage.getItem('w1ne_age_verified');
+  const region = localStorage.getItem('w1ne_selected_region');
+  
+  if (user) {
+    try {
+      const userData = JSON.parse(user);
+      setCurrentUser(userData);
+      
+      // If user exists and has age/region, skip age gate
+      if (userData.ageVerified && userData.region) {
+        setSelectedRegion(userData.region);
+        setShowAgeGate(false);
+      } else if (verified && region) {
+        setSelectedRegion(region);
+        setShowAgeGate(false);
+      } else {
+        setShowAgeGate(true);
+      }
+    } catch (e) {
+      console.error('Error parsing user:', e);
       setShowAgeGate(true);
-    } else if (region) {
-      setSelectedRegion(region);
     }
-
-    if (user) {
-      setCurrentUser(JSON.parse(user));
-    }
-  }
-
-  function handleAgeAndRegionVerified(region) {
+  } else if (!verified) {
+    setShowAgeGate(true);
+  } else if (region) {
     setSelectedRegion(region);
-    setShowAgeGate(false);
-    setView("chat");
   }
+}
+
+  function handleAgeVerified(region) {
+  localStorage.setItem('w1ne_age_verified', 'true');
+  localStorage.setItem('w1ne_selected_region', region);
+  
+  // Update user if logged in
+  if (currentUser) {
+    const updatedUser = {
+      ...currentUser,
+      ageVerified: true,
+      region: region
+    };
+    setCurrentUser(updatedUser);
+    localStorage.setItem('w1ne_user', JSON.stringify(updatedUser));
+  }
+  
+  setSelectedRegion(region);
+  setShowAgeGate(false);
+}
 
   function handleSignOut() {
     // Clear all user data
@@ -104,8 +110,16 @@ function App() {
   }
 
   if (showAgeGate) {
-    return <AgeGateWithRegion onVerified={handleAgeAndRegionVerified} />;
-  }
+  return (
+    <AgeGateWithRegion 
+      onVerified={handleAgeVerified}
+      onShowAuth={() => {
+        setShowAgeGate(false);
+        setShowAuthModal(true);
+      }}
+    />
+  );
+}
 
   return (
     <div className="min-h-screen bg-white">
@@ -203,6 +217,41 @@ function App() {
           />
         )}
       </main>
+{/* Footer */}
+      {!showAgeGate && (
+        <footer className="bg-gray-50 border-t border-gray-200 py-8 mt-12">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
+              <button onClick={() => setStaticPage('about')} className="hover:text-black transition">
+                About Us
+              </button>
+              <span className="text-gray-300">•</span>
+              <button onClick={() => setStaticPage('impressum')} className="hover:text-black transition">
+                Impressum
+              </button>
+              <span className="text-gray-300">•</span>
+              <button onClick={() => setStaticPage('privacy')} className="hover:text-black transition">
+                Privacy Policy
+              </button>
+              <span className="text-gray-300">•</span>
+              <button onClick={() => setStaticPage('cookies')} className="hover:text-black transition">
+                Cookie Policy
+              </button>
+              <span className="text-gray-300">•</span>
+              <button onClick={() => setStaticPage('terms')} className="hover:text-black transition">
+                Terms of Use
+              </button>
+            </div>
+            <div className="text-center mt-4 text-xs text-gray-400">
+              © 2026 W1NE. All rights reserved.
+            </div>
+          </div>
+        </footer>
+      )}
+
+      {staticPage && (
+        <StaticPage page={staticPage} onClose={() => setStaticPage(null)} />
+      )}
 
       {/* Auth Modal */}
       {showAuthModal && (
@@ -2323,142 +2372,106 @@ function EntityDetailModal({ entity, onClose, onBookmark, currentUser }) {
   );
 }
 
-function AgeGateWithRegion({ onVerified }) {
+function AgeGateWithRegion({ onVerified, onShowAuth }) {
   const [step, setStep] = useState(1); // 1: age, 2: region
-  const [birthdate, setBirthdate] = useState("");
-  const [selectedRegion, setSelectedRegion] = useState("");
-  const [error, setError] = useState("");
+  const [selectedRegion, setSelectedRegion] = useState('');
 
-  const regions = [
-    { code: "CH", name: "Switzerland" },
-    { code: "US", name: "United States" },
-    { code: "FR", name: "France" },
-    { code: "IT", name: "Italy" },
-    { code: "ES", name: "Spain" },
-    { code: "ZA", name: "South Africa" },
-  ];
-
-  function handleAgeVerify() {
-    if (!birthdate) {
-      setError("Please enter your date of birth");
-      return;
-    }
-
-    const age = calculateAge(birthdate);
-    if (age >= 18) {
-      localStorage.setItem("w1ne_age_verified", "true");
-      setStep(2);
-      setError("");
-    } else {
-      setError("You must be 18 or older to access W1NE.");
-    }
+  function handleAgeVerified() {
+    setStep(2);
   }
 
-  function handleRegionSelect() {
+  function handleRegionSelected() {
     if (!selectedRegion) {
-      setError("Please select your region");
+      alert('Please select your region');
       return;
     }
-
-    localStorage.setItem("w1ne_selected_region", selectedRegion);
     onVerified(selectedRegion);
   }
 
-  function calculateAge(birthdate) {
-    const today = new Date();
-    const birth = new Date(birthdate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birth.getDate())
-    ) {
-      age--;
-    }
-    return age;
-  }
-
   return (
-    <div className="fixed inset-0 z-50 bg-white flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-12">
-          <div className="text-5xl font-black mb-4">W1NE</div>
-          <p className="text-gray-600">
-            {step === 1
-              ? "Welcome! Please verify your age."
-              : "Great! Now select your region."}
-          </p>
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+      <div className="max-w-md w-full text-center">
+        {/* W1NE Logo */}
+        <div className="mb-8">
+          <Wine className="w-20 h-20 mx-auto mb-4" />
+          <h1 className="text-5xl font-bold">W1NE</h1>
         </div>
 
         {step === 1 ? (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Date of Birth
-              </label>
-              <input
-                type="date"
-                value={birthdate}
-                onChange={(e) => {
-                  setBirthdate(e.target.value);
-                  setError("");
-                }}
-                className="w-full px-4 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:border-black transition"
-              />
-            </div>
-
-            {error && (
-              <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-                {error}
-              </p>
-            )}
+          // Age Verification Step
+          <>
+            <p className="text-xl mb-8">Welcome! Please verify your age or sign in.</p>
+            
+            <button
+              onClick={handleAgeVerified}
+              className="w-full px-8 py-4 bg-white text-black rounded-xl font-bold text-lg hover:bg-gray-100 transition mb-4"
+            >
+              I am 18+
+            </button>
 
             <button
-              onClick={handleAgeVerify}
-              className="w-full px-6 py-4 bg-black text-white rounded-2xl font-semibold hover:bg-gray-800 transition"
+              onClick={onShowAuth}
+              className="w-full px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl font-bold text-lg hover:bg-white hover:text-black transition"
+            >
+              Sign In
+            </button>
+          </>
+        ) : (
+          // Region Selection Step
+          <>
+            <p className="text-xl mb-8">Select your region</p>
+            
+            <select
+              value={selectedRegion}
+              onChange={(e) => setSelectedRegion(e.target.value)}
+              className="w-full px-4 py-3 bg-white text-black rounded-xl mb-6 text-lg"
+            >
+              <option value="">Select Your Region</option>
+              <option value="CH">🇨🇭 Switzerland</option>
+              <option value="US">🇺🇸 United States</option>
+              <option value="FR">🇫🇷 France</option>
+              <option value="IT">🇮🇹 Italy</option>
+              <option value="ES">🇪🇸 Spain</option>
+              <option value="DE">🇩🇪 Germany</option>
+              <option value="AT">🇦🇹 Austria</option>
+              <option value="UK">🇬🇧 United Kingdom</option>
+              <option value="AU">🇦🇺 Australia</option>
+              <option value="NZ">🇳🇿 New Zealand</option>
+              <option value="ZA">🇿🇦 South Africa</option>
+              <option value="AR">🇦🇷 Argentina</option>
+              <option value="CL">🇨🇱 Chile</option>
+            </select>
+
+            <button
+              onClick={handleRegionSelected}
+              className="w-full px-8 py-4 bg-white text-black rounded-xl font-bold text-lg hover:bg-gray-100 transition"
             >
               Continue
             </button>
 
-            <p className="text-xs text-gray-500 text-center">
-              By continuing, you confirm you are of legal drinking age.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-3">
-              {regions.map((region) => (
-                <button
-                  key={region.code}
-                  onClick={() => {
-                    setSelectedRegion(region.code);
-                    setError("");
-                  }}
-                  className={`p-5 border-2 rounded-2xl font-medium transition ${
-                    selectedRegion === region.code
-                      ? "border-black bg-black text-white"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  {region.name}
-                </button>
-              ))}
-            </div>
-
-            {error && (
-              <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-                {error}
-              </p>
-            )}
-
             <button
-              onClick={handleRegionSelect}
-              className="w-full px-6 py-4 bg-black text-white rounded-2xl font-semibold hover:bg-gray-800 transition"
+              onClick={() => setStep(1)}
+              className="w-full px-4 py-2 mt-4 text-gray-400 hover:text-white transition"
             >
-              Get Started
+              ← Back
             </button>
-          </div>
+          </>
         )}
+
+        {/* Footer Links */}
+        <div className="mt-12 pt-8 border-t border-gray-800 text-sm text-gray-400">
+          <div className="flex flex-wrap justify-center gap-4">
+            <a href="#about" className="hover:text-white transition">About Us</a>
+            <span>•</span>
+            <a href="#impressum" className="hover:text-white transition">Impressum</a>
+            <span>•</span>
+            <a href="#privacy" className="hover:text-white transition">Privacy Policy</a>
+            <span>•</span>
+            <a href="#cookies" className="hover:text-white transition">Cookie Policy</a>
+            <span>•</span>
+            <a href="#terms" className="hover:text-white transition">Terms of Use</a>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -3657,4 +3670,259 @@ function UploadModal({ onClose, onUpload, editingVideo, selectedRegion }) {
   );
 }
 
+// Static Pages Component
+function StaticPage({ page, onClose }) {
+  const content = {
+    about: {
+      title: 'About W1NE',
+      content: `W1NE is your personal wine discovery platform. We connect wine enthusiasts with the best wine bars, shops, wineries, and restaurants around the world.
+
+Our mission is to make wine discovery social, accessible, and enjoyable for everyone. Whether you're a sommelier or just starting your wine journey, W1NE helps you find your next favorite place.
+
+Founded in 2026, W1NE combines AI-powered search with community-driven content to create the ultimate wine discovery experience.`
+    },
+    impressum: {
+      title: 'Impressum',
+      content: `W1NE Platform
+[Your Company Name]
+[Your Address]
+[City, Postal Code]
+[Country]
+
+Email: info@w1ne.app
+Phone: [Your Phone]
+
+Registration: [Company Registration Number]
+VAT ID: [VAT Number]
+
+Responsible for content: [Your Name]`
+    },
+    privacy: {
+      title: 'Privacy Policy',
+      content: `Last updated: January 2026
+
+1. Information We Collect
+We collect information you provide directly, including email addresses, preferences, and content you create.
+
+2. How We Use Your Information
+- To provide and improve our services
+- To communicate with you
+- To personalize your experience
+- To ensure platform security
+
+3. Data Storage
+Your data is stored securely using industry-standard encryption. We use localStorage for session management and our backend services comply with GDPR.
+
+4. Your Rights
+You have the right to access, correct, or delete your personal data at any time.
+
+5. Contact
+For privacy concerns: privacy@w1ne.app`
+    },
+    cookies: {
+      title: 'Cookie Policy',
+      content: `Last updated: January 2026
+
+W1NE uses cookies and similar technologies to provide and improve our services.
+
+Types of Cookies We Use:
+
+1. Essential Cookies
+Required for the platform to function. These include authentication and session management.
+
+2. Preference Cookies
+Remember your settings and preferences, such as selected region.
+
+3. Analytics Cookies
+Help us understand how you use W1NE to improve the experience.
+
+Managing Cookies:
+You can control cookies through your browser settings. Note that disabling certain cookies may limit platform functionality.
+
+For questions: cookies@w1ne.app`
+    },
+    terms: {
+      title: 'Terms of Use',
+      content: `Last updated: January 2026
+
+1. Acceptance of Terms
+By using W1NE, you agree to these Terms of Use.
+
+2. Age Requirement
+You must be 18+ to use W1NE. By verifying your age, you confirm you meet this requirement.
+
+3. User Content
+- You retain rights to content you create
+- You grant W1NE license to display and distribute your content
+- You are responsible for content you post
+- Prohibited: Spam, harassment, illegal content
+
+4. User Conduct
+- Be respectful to other users
+- Provide accurate information
+- Don't misuse the platform
+- Follow local laws regarding alcohol
+
+5. Liability
+W1NE is provided "as is." We are not liable for:
+- Third-party content or services
+- Decisions made based on platform information
+- Service interruptions
+
+6. Changes to Terms
+We may update these terms. Continued use constitutes acceptance.
+
+7. Contact
+For questions: legal@w1ne.app`
+    }
+  };
+
+  const pageContent = content[page] || content.about;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white">
+          <h2 className="text-2xl font-bold">{pageContent.title}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+          <div className="prose max-w-none whitespace-pre-line">
+            {pageContent.content}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Static Pages Component
+function StaticPage({ page, onClose }) {
+  const content = {
+    about: {
+      title: 'About W1NE',
+      content: `W1NE is your personal wine discovery platform. We connect wine enthusiasts with the best wine bars, shops, wineries, and restaurants around the world.
+
+Our mission is to make wine discovery social, accessible, and enjoyable for everyone. Whether you're a sommelier or just starting your wine journey, W1NE helps you find your next favorite place.
+
+Founded in 2026, W1NE combines AI-powered search with community-driven content to create the ultimate wine discovery experience.`
+    },
+    impressum: {
+      title: 'Impressum',
+      content: `W1NE Platform
+[Your Company Name]
+[Your Address]
+[City, Postal Code]
+[Country]
+
+Email: info@w1ne.app
+Phone: [Your Phone]
+
+Registration: [Company Registration Number]
+VAT ID: [VAT Number]
+
+Responsible for content: [Your Name]`
+    },
+    privacy: {
+      title: 'Privacy Policy',
+      content: `Last updated: January 2026
+
+1. Information We Collect
+We collect information you provide directly, including email addresses, preferences, and content you create.
+
+2. How We Use Your Information
+- To provide and improve our services
+- To communicate with you
+- To personalize your experience
+- To ensure platform security
+
+3. Data Storage
+Your data is stored securely using industry-standard encryption. We use localStorage for session management and our backend services comply with GDPR.
+
+4. Your Rights
+You have the right to access, correct, or delete your personal data at any time.
+
+5. Contact
+For privacy concerns: privacy@w1ne.app`
+    },
+    cookies: {
+      title: 'Cookie Policy',
+      content: `Last updated: January 2026
+
+W1NE uses cookies and similar technologies to provide and improve our services.
+
+Types of Cookies We Use:
+
+1. Essential Cookies
+Required for the platform to function. These include authentication and session management.
+
+2. Preference Cookies
+Remember your settings and preferences, such as selected region.
+
+3. Analytics Cookies
+Help us understand how you use W1NE to improve the experience.
+
+Managing Cookies:
+You can control cookies through your browser settings. Note that disabling certain cookies may limit platform functionality.
+
+For questions: cookies@w1ne.app`
+    },
+    terms: {
+      title: 'Terms of Use',
+      content: `Last updated: January 2026
+
+1. Acceptance of Terms
+By using W1NE, you agree to these Terms of Use.
+
+2. Age Requirement
+You must be 18+ to use W1NE. By verifying your age, you confirm you meet this requirement.
+
+3. User Content
+- You retain rights to content you create
+- You grant W1NE license to display and distribute your content
+- You are responsible for content you post
+- Prohibited: Spam, harassment, illegal content
+
+4. User Conduct
+- Be respectful to other users
+- Provide accurate information
+- Don't misuse the platform
+- Follow local laws regarding alcohol
+
+5. Liability
+W1NE is provided "as is." We are not liable for:
+- Third-party content or services
+- Decisions made based on platform information
+- Service interruptions
+
+6. Changes to Terms
+We may update these terms. Continued use constitutes acceptance.
+
+7. Contact
+For questions: legal@w1ne.app`
+    }
+  };
+
+  const pageContent = content[page] || content.about;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white">
+          <h2 className="text-2xl font-bold">{pageContent.title}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+          <div className="prose max-w-none whitespace-pre-line">
+            {pageContent.content}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 export default App;

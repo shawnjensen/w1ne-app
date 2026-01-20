@@ -1459,6 +1459,8 @@ function BookmarksView({ currentUser, onRequireAuth }) {
   );
 }
 
+const WORKER_URL = 'w1ne-ai-claude.shawn-815.workers.dev';
+
 function ClaudeChatInterface({ selectedRegion, currentUser, onRequireAuth }) {
   const [messages, setMessages] = useState([
     {
@@ -1474,6 +1476,7 @@ function ClaudeChatInterface({ selectedRegion, currentUser, onRequireAuth }) {
   const [selectedEntity, setSelectedEntity] = useState(null);
   const [conversationHistory, setConversationHistory] = useState([]);
   const [currentConversationId, setCurrentConversationId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Seed initial data and load conversation history on mount
   useEffect(() => {
@@ -1672,78 +1675,52 @@ function ClaudeChatInterface({ selectedRegion, currentUser, onRequireAuth }) {
   }
 
   async function handleSendMessage() {
-    if (!input.trim() || loading) return;
+  if (!input.trim() || isLoading) return;
+  
+  const userMessage = input.trim();
+  setInput('');
+  
+  // Add user message to chat
+  const newMessages = [...messages, { role: 'user', content: userMessage }];
+  setMessages(newMessages);
+  setIsLoading(true);
+  
+  try {
+    // Call your Cloudflare Worker
+    const response = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: userMessage,
+        history: newMessages.slice(-10) // Last 10 messages for context
+      })
+    });
 
-    const userMessage = {
-      role: "user",
-      content: input,
-      timestamp: Date.now(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setLoading(true);
-
-    // Auto-save conversation after sending message
-    setTimeout(() => saveConversation(), 500);
-
-    try {
-      // First, check our database
-      const existingMatches = await searchLocalEntities(input, selectedRegion);
-
-      if (existingMatches.length > 0) {
-        const assistantMessage = {
-          role: "assistant",
-          content: `Perfect! I found ${existingMatches.length} ${
-            existingMatches.length === 1 ? "match" : "matches"
-          } in our database:`,
-          timestamp: Date.now(),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-        setMatchResults(existingMatches);
-        setLoading(false);
-      } else {
-        // Not in database - use Claude with web search
-        const aiMessage = {
-          role: "assistant",
-          content: `Searching the web for you...`,
-          timestamp: Date.now(),
-        };
-        setMessages((prev) => [...prev, aiMessage]);
-
-        const newEntities = await searchWithClaudeAndAdd(input, selectedRegion);
-
-        if (newEntities.length > 0) {
-          const successMessage = {
-            role: "assistant",
-            content: `Great! I found ${newEntities.length} wine ${
-              newEntities.length === 1 ? "spot" : "spots"
-            } on the web and added them to W1NE for you:`,
-            timestamp: Date.now(),
-          };
-          setMessages((prev) => [...prev, successMessage]);
-          setMatchResults(newEntities);
-        } else {
-          const noResultsMessage = {
-            role: "assistant",
-            content: `I couldn't find anything matching "${input}". Try being more specific, like "natural wine bar in Zurich city center" or "organic wine shop Geneva"`,
-            timestamp: Date.now(),
-          };
-          setMessages((prev) => [...prev, noResultsMessage]);
-        }
-        setLoading(false);
-      }
-    } catch (error) {
-      console.error("Search error:", error);
-      const errorMessage = {
-        role: "assistant",
-        content: `Oops, something went wrong. Try again?`,
-        timestamp: Date.now(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-      setLoading(false);
+    if (!response.ok) {
+      throw new Error('API request failed');
     }
+
+    const data = await response.json();
+    const aiMessage = data.message;
+
+    // Add AI response to chat
+    setMessages([...newMessages, {
+      role: 'assistant',
+      content: aiMessage
+    }]);
+
+  } catch (error) {
+    console.error('Chat error:', error);
+    setMessages([...newMessages, {
+      role: 'assistant',
+      content: 'Sorry, I\'m having trouble connecting. Please try again!'
+    }]);
+  } finally {
+    setIsLoading(false);
   }
+}
 
   async function searchLocalEntities(query, region) {
     // Load entities from storage
@@ -2034,6 +2011,18 @@ If you find nothing in ${region}, return an empty array [].`,
               </div>
             </div>
           ))}
+        {/* Add loading indicator */}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 rounded-2xl px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
           {/* Match Results */}
           {matchResults.length > 0 && (
@@ -2070,8 +2059,11 @@ If you find nothing in ${region}, return an empty array [].`,
             />
             <button
               onClick={handleSendMessage}
-              disabled={!input.trim() || loading}
-              className="px-6 py-4 bg-black text-white rounded-2xl hover:bg-gray-800 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+              disabled={isLoading || !input.trim()}
+              className="... disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Sending...' : 'Send'}
+            </button>
             >
               <Send className="w-5 h-5" />
             </button>

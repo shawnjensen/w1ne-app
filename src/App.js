@@ -2071,7 +2071,7 @@ If you find nothing in ${region}, return an empty array [].`,
   </div>
 </div>
 
-      {/* Entity Detail Modal */}
+{/* Entity Detail Modal */}
       {selectedEntity && (
         <EntityDetailModal
           entity={selectedEntity}

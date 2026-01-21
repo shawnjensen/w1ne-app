@@ -2003,7 +2003,6 @@ return (
     </div>
   </div>
 );
-}
 
   return (
     <div className="pt-20 h-screen flex max-w-7xl mx-auto">

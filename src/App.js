@@ -2047,29 +2047,29 @@ If you find nothing in ${region}, return an empty array [].`,
         </div>
 
         {/* Input Bar */}
-        <div className="border-t border-gray-200 bg-white p-6">
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-              placeholder="What are you looking for?"
-              className="flex-1 px-6 py-4 border border-gray-200 rounded-2xl focus:outline-none focus:border-black transition text-sm"
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={isLoading || !input.trim()}
-              className="... disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Sending...' : 'Send'}
-            </button>
-            >
-              <Send className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </div>
+<div className="border-t border-gray-200 bg-white p-6">
+  <div className="flex gap-3">
+    <input
+      type="text"
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+      onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+      placeholder="What are you looking for?"
+      className="flex-1 px-6 py-4 border border-gray-200 rounded-2xl focus:outline-none focus:border-black transition text-sm"
+    />
+    <button
+      onClick={handleSendMessage}
+      disabled={isLoading || !input.trim()}
+      className="px-6 py-4 bg-black text-white rounded-2xl font-semibold hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {isLoading ? (
+        'Sending...'
+      ) : (
+        <Send className="w-5 h-5" />
+      )}
+    </button>
+  </div>
+</div>
 
       {/* Entity Detail Modal */}
       {selectedEntity && (

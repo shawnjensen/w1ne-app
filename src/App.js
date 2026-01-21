@@ -1459,7 +1459,7 @@ function BookmarksView({ currentUser, onRequireAuth }) {
   );
 }
 
-const WORKER_URL = 'w1ne-ai-claude.shawn-815.workers.dev';
+const WORKER_URL = 'https://w1ne-ai-claude.shawn-815.workers.dev';
 
 function ClaudeChatInterface({ selectedRegion, currentUser, onRequireAuth }) {
   const [messages, setMessages] = useState([
@@ -1471,7 +1471,6 @@ function ClaudeChatInterface({ selectedRegion, currentUser, onRequireAuth }) {
     },
   ]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
   const [matchResults, setMatchResults] = useState([]);
   const [selectedEntity, setSelectedEntity] = useState(null);
   const [conversationHistory, setConversationHistory] = useState([]);
@@ -1940,69 +1939,6 @@ If you find nothing in ${region}, return an empty array [].`,
       alert("Failed to save bookmark. Please try again.");
     }
   }
-  
-return (
-  <div className="flex flex-col h-screen bg-white">
-    <header className="border-b border-gray-200 px-6 py-4 bg-white">
-      <div className="flex items-center gap-3">
-        <Wine className="w-8 h-8 text-black" />
-        <h1 className="text-xl font-bold text-black">W1NE AI</h1>
-      </div>
-    </header>
-
-    <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-      {messages.map((msg, idx) => (
-        <div
-          key={idx}
-          className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-        >
-          <div
-            className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-              msg.role === 'user'
-                ? 'bg-black text-white'
-                : 'bg-gray-100 text-gray-900'
-            }`}
-          >
-            {msg.content}
-          </div>
-        </div>
-      ))}
-      
-      {isLoading && (
-        <div className="flex justify-start">
-          <div className="bg-gray-100 rounded-2xl px-4 py-3">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-
-    <div className="border-t border-gray-200 bg-white p-6">
-      <div className="flex gap-3">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-          placeholder="What are you looking for?"
-          className="flex-1 px-6 py-4 border border-gray-200 rounded-2xl focus:outline-none focus:border-black transition text-sm"
-          disabled={isLoading}
-        />
-        <button
-          onClick={handleSendMessage}
-          disabled={isLoading || !input.trim()}
-          className="px-6 py-4 bg-black text-white rounded-2xl font-semibold hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading ? 'Sending...' : <Send className="w-5 h-5" />}
-        </button>
-      </div>
-    </div>
-  </div>
-);
 
   return (
     <div className="pt-20 h-screen flex max-w-7xl mx-auto">
@@ -2100,13 +2036,6 @@ return (
             </div>
           )}
 
-          {loading && (
-            <div className="text-left">
-              <div className="inline-block bg-gray-100 rounded-3xl rounded-tl-sm px-6 py-4">
-                <Loader2 className="w-5 h-5 animate-spin" />
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Input Bar */}

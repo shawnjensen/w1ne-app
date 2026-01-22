@@ -19,6 +19,147 @@ import {
   Globe,
 } from "lucide-react";
 
+// ────────────────────────────────────────────────
+// Reusable pieces for showing wine places (entities)
+// ────────────────────────────────────────────────
+
+function ImageWithFallback({ src, alt, className = "", fallbackIcon = Camera }) {
+  const [error, setError] = useState(false);
+
+  if (!src || error) {
+    return (
+      <div className={`bg-gray-200 flex items-center justify-center ${className}`}>
+        {React.createElement(fallbackIcon, { className: "w-12 h-12 text-gray-400" })}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      onError={() => setError(true)}
+    />
+  );
+}
+
+function SpecialtyTags({ specialties = [], className = "" }) {
+  if (!specialties?.length) return null;
+  return (
+    <div className={`flex flex-wrap gap-2 ${className}`}>
+      {specialties.slice(0, 4).map((tag) => (
+        <span
+          key={tag}
+          className="px-2.5 py-1 bg-gray-100 rounded-full text-xs font-medium"
+        >
+          #{tag}
+        </span>
+      ))}
+      {specialties.length > 4 && (
+        <span className="px-2.5 py-1 bg-gray-100 rounded-full text-xs font-medium">
+          +{specialties.length - 4}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function EntityHeader({
+  entity,
+  size = "default", // "small" | "default" | "large"
+  showVerified = true,
+  showType = true,
+  className = "",
+}) {
+  const textSize = size === "large" ? "text-xl" : size === "small" ? "text-base" : "text-lg";
+  
+  return (
+    <div className={`flex flex-col ${className}`}>
+      <div className="flex items-center gap-2">
+        <h3 className={`${textSize} font-semibold`}>{entity.name}</h3>
+        {showVerified && entity.verified && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-black text-white text-xs font-medium rounded">
+            <Star className="w-3 h-3 fill-white" /> Verified
+          </span>
+        )}
+        {entity.webSourced && (
+          <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
+            Web
+          </span>
+        )}
+      </div>
+
+      {(showType || entity.country) && (
+        <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+          {showType && (
+            <span className="capitalize">{entity.type.replace("-", " ")}</span>
+          )}
+          {entity.country && (
+            <>
+              {showType && <span>•</span>}
+              <span>{entity.country}</span>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EntityCard({
+  entity,
+  onClick,
+  variant = "default", // "default" | "compact" | "horizontal"
+  showBookmarkButton = false,
+  onBookmark,
+  currentUser,
+}) {
+  const displayImage = entity.imageUrl || entity.imageUrls?.[0] || entity.imageData;
+
+  return (
+    <button
+      onClick={onClick}
+      className={`text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-black transition hover:shadow-sm group ${
+        variant === "horizontal" ? "flex gap-4 p-4" : ""
+      }`}
+    >
+      <div className={`bg-gray-200 overflow-hidden ${
+        variant === "horizontal" ? "w-28 h-28 flex-shrink-0" : "aspect-video"
+      }`}>
+        <ImageWithFallback
+          src={displayImage}
+          alt={entity.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        />
+      </div>
+
+      <div className={`p-5 ${variant === "horizontal" ? "flex-1" : ""}`}>
+        <EntityHeader entity={entity} showType={false} />
+
+        <p className="text-sm text-gray-600 mt-2 flex items-center gap-1.5">
+          <MapPin className="w-4 h-4 flex-shrink-0" />
+          {entity.address}
+        </p>
+
+        <SpecialtyTags specialties={entity.specialties} className="mt-3" />
+
+        {showBookmarkButton && currentUser && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onBookmark?.(entity);
+            }}
+            className="mt-4 px-5 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 transition"
+          >
+            Save
+          </button>
+        )}
+      </div>
+    </button>
+  );
+}
+
 // CodeSandbox Compatibility: Add window.storage API
 if (typeof window !== "undefined" && !window.storage) {
   window.storage = {
@@ -2822,45 +2963,14 @@ function DiscoverView({ selectedRegion, currentUser, onRequireAuth }) {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEntities.map((entity) => (
-              <button
+                   <EntityCard
                 key={entity.id}
+                entity={entity}
                 onClick={() => setSelectedEntity(entity)}
-                className="text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-black transition hover-lift"
-              >
-                {/* Image */}
-                <div className="aspect-video bg-gray-200 flex items-center justify-center">
-                  <Camera className="w-12 h-12 text-gray-400" />
-                </div>
-
-                {/* Content */}
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-lg">{entity.name}</h3>
-                    {entity.verified && (
-                      <Star className="w-4 h-4 fill-black text-black" />
-                    )}
-                  </div>
-
-                  <p className="text-sm text-gray-600 mb-3 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 flex-shrink-0" />
-                    {entity.address}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2">
-                    {entity.specialties?.slice(0, 2).map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-1 bg-gray-100 rounded-lg text-xs"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                    <span className="px-2 py-1 bg-black text-white rounded-lg text-xs uppercase">
-                      {entity.type}
-                    </span>
-                  </div>
-                </div>
-              </button>
+                showBookmarkButton={true}
+                onBookmark={handleBookmark}
+                currentUser={currentUser}
+              />
             ))}
           </div>
         )}

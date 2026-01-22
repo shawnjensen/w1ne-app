@@ -20,6 +20,76 @@ import {
 } from "lucide-react";
 
 // ────────────────────────────────────────────────
+// Storage helper – makes all localStorage calls cleaner and safer
+// ────────────────────────────────────────────────
+
+const Storage = {
+  // Generic prefix-based operations
+  prefix(base) {
+    return {
+      async list() {
+        const result = await window.storage.list(base);
+        const items = [];
+        for (const key of result?.keys || []) {
+          const val = await window.storage.get(key);
+          if (val?.value) {
+            try {
+              items.push(JSON.parse(val.value));
+            } catch (err) {
+              console.warn(`Failed to parse storage item ${key}:`, err);
+            }
+          }
+        }
+        return items;
+      },
+
+      async get(fullKey) {
+        const val = await window.storage.get(fullKey);
+        return val?.value ? JSON.parse(val.value) : null;
+      },
+
+      async set(fullKey, data) {
+        await window.storage.set(fullKey, JSON.stringify(data));
+      },
+
+      async delete(fullKey) {
+        await window.storage.delete(fullKey);
+      },
+    };
+  },
+
+  // Specific domains
+  entities(country) {
+    return this.prefix(`entity:${country}:`);
+  },
+
+  videos() {
+    return this.prefix("video:");
+  },
+
+  bookmarks(email) {
+    return this.prefix(`bookmark:${email}:`);
+  },
+
+  conversations() {
+    return this.prefix("conversation:");
+  },
+
+  // Quick helpers for common patterns
+  async getEntity(country, id) {
+    return this.entities(country).get(`entity:${country}:${id}`);
+  },
+
+  async saveEntity(country, id, data) {
+    return this.entities(country).set(`entity:${country}:${id}`, data);
+  },
+
+  async deleteEntity(country, id) {
+    return this.entities(country).delete(`entity:${country}:${id}`);
+  },
+};
+
+// ────────────────────────────────────────────────
 // Reusable pieces for showing wine places (entities)
 // ────────────────────────────────────────────────
 

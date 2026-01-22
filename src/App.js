@@ -883,7 +883,7 @@ function AdminDashboard({ currentUser, onRequireAuth }) {
   }
 
   async function handleDeleteVideo(videoId) {
-    if (!confirm("Delete this video permanently?")) return;
+    if (!window.confirm("Delete this video permanently?")) return;
     await window.storage.delete(`video:${videoId}`);
     setVideos((prev) => prev.filter((v) => v.id !== videoId));
   }
@@ -919,7 +919,7 @@ function AdminDashboard({ currentUser, onRequireAuth }) {
   async function handleDeleteEntity(entityId) {
     const entity = entities.find((e) => e.id === entityId);
     if (!entity) return;
-    if (!confirm(`Delete ${entity.name} permanently?`)) return;
+    if (!window.confirm(`Delete ${entity.name} permanently?`)) return;
 
     await window.storage.delete(`entity:${entity.country}:${entityId}`);
     setEntities((prev) => prev.filter((e) => e.id !== entityId));

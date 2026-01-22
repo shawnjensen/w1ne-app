@@ -1530,58 +1530,14 @@ function BookmarksView({ currentUser, onRequireAuth }) {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {bookmarks.map((bookmark) => (
-              <div
+                           <EntityCard
                 key={bookmark.entityId}
-                className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-black transition"
-              >
-                {/* Image */}
-                <div className="aspect-video bg-gray-200 flex items-center justify-center">
-                  <Camera className="w-12 h-12 text-gray-400" />
-                </div>
-
-                {/* Content */}
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-lg flex-1">
-                      {bookmark.entity.name}
-                    </h3>
-                    {bookmark.entity.verified && (
-                      <Star className="w-4 h-4 fill-black text-black flex-shrink-0" />
-                    )}
-                  </div>
-
-                  <p className="text-sm text-gray-600 mb-3 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 flex-shrink-0" />
-                    {bookmark.entity.address}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {bookmark.entity.specialties?.slice(0, 2).map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-1 bg-gray-100 rounded-lg text-xs"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setSelectedEntity(bookmark.entity)}
-                      className="flex-1 px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition"
-                    >
-                      View Details
-                    </button>
-                    <button
-                      onClick={() => handleRemoveBookmark(bookmark)}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+                entity={bookmark.entity}
+                onClick={() => setSelectedEntity(bookmark.entity)}
+                showBookmarkButton={true}
+                onBookmark={() => handleRemoveBookmark(bookmark)}
+                currentUser={currentUser}
+              />
             ))}
           </div>
         )}

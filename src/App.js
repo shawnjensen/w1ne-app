@@ -1556,7 +1556,7 @@ function BookmarksView({ currentUser, onRequireAuth }) {
   }
 
   async function handleRemoveBookmark(bookmark) {
-    if (!confirm("Remove this bookmark?")) return;
+    if (!window.confirm("Remove this bookmark?")) return;
 
     try {
       await window.storage.delete(

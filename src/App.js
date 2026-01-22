@@ -823,28 +823,32 @@ function AdminDashboard({ currentUser, onRequireAuth }) {
   }
 
   async function loadEntities() {
-    const result = await window.storage.list("entity:");
-    const ents = [];
-    if (result && result.keys) {
-      for (const key of result.keys) {
-        const entResult = await window.storage.get(key);
-        if (entResult) {
-          const entity = JSON.parse(entResult.value);
-          // Entity admins only see their own entities
-          if (isEntityAdmin) {
-            if (entity.adminEmail === currentUser.email) {
-              ents.push(entity);
-            }
-          } else {
-            // Master admin sees all
-            ents.push(entity);
-          }
-        }
-      }
+  setLoading(true);
+  try {
+    // List of countries your app supports
+    const countries = ["CH", "US", "FR", "IT", "ES", "ZA", "AU", "NZ"]; // ← add more if needed
+
+    const allEntities = [];
+
+    for (const country of countries) {
+      const items = await Storage.entities(country).list();
+      allEntities.push(...items);
     }
-    ents.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
-    setEntities(ents);
+
+    // Entity admins only see their own entities
+    let filtered = allEntities;
+    if (isEntityAdmin) {
+      filtered = allEntities.filter(e => e.adminEmail === currentUser.email);
+    }
+
+    filtered.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+    setEntities(filtered);
+  } catch (error) {
+    console.error("Error loading entities:", error);
+  } finally {
+    setLoading(false);
   }
+}
 
   async function loadUsers() {
     // Extract unique users from videos
@@ -895,10 +899,7 @@ function AdminDashboard({ currentUser, onRequireAuth }) {
       updatedAt: Date.now(),
     };
 
-    await window.storage.set(
-      `entity:${entity.country}:${entity.id}`,
-      JSON.stringify(entity)
-    );
+    await Storage.entities(entity.country).set(entity.id, entity);
     setEntities((prev) => prev.map((e) => (e.id === entity.id ? entity : e)));
     setEditingEntity(null);
   }
@@ -908,10 +909,7 @@ function AdminDashboard({ currentUser, onRequireAuth }) {
     entity.verifiedAt = Date.now();
     entity.verifiedBy = currentUser.email;
 
-    await window.storage.set(
-      `entity:${entity.country}:${entity.id}`,
-      JSON.stringify(entity)
-    );
+    await Storage.entities(entity.country).set(entity.id, entity);
     setEntities((prev) => prev.map((e) => (e.id === entity.id ? entity : e)));
     setShowVerifyModal(null);
   }
@@ -921,7 +919,7 @@ function AdminDashboard({ currentUser, onRequireAuth }) {
     if (!entity) return;
     if (!confirm(`Delete ${entity.name} permanently?`)) return;
 
-    await window.storage.delete(`entity:${entity.country}:${entityId}`);
+    await Storage.entities(entity.country).delete(entityId);
     setEntities((prev) => prev.filter((e) => e.id !== entityId));
   }
 
@@ -1531,19 +1529,7 @@ function BookmarksView({ currentUser, onRequireAuth }) {
 
     setLoading(true);
     try {
-      const result = await window.storage.list(
-        `bookmark:${currentUser.email}:`
-      );
-      const loadedBookmarks = [];
-
-      if (result && result.keys) {
-        for (const key of result.keys) {
-          const bookmarkResult = await window.storage.get(key);
-          if (bookmarkResult) {
-            loadedBookmarks.push(JSON.parse(bookmarkResult.value));
-          }
-        }
-      }
+      const loadedBookmarks = await Storage.bookmarks(currentUser.email).list();
 
       // Sort by newest first
       loadedBookmarks.sort((a, b) => b.timestamp - a.timestamp);
@@ -1559,9 +1545,7 @@ function BookmarksView({ currentUser, onRequireAuth }) {
     if (!confirm("Remove this bookmark?")) return;
 
     try {
-      await window.storage.delete(
-        `bookmark:${currentUser.email}:${bookmark.entityId}`
-      );
+     await Storage.bookmarks(currentUser.email).delete(bookmark.entityId);
       setBookmarks(bookmarks.filter((b) => b.entityId !== bookmark.entityId));
     } catch (error) {
       console.error("Error removing bookmark:", error);
@@ -1720,11 +1704,11 @@ function ClaudeChatInterface({ selectedRegion, currentUser, onRequireAuth }) {
 
   async function seedInitialData() {
     // Check if we already have data for this region
-    const existing = await window.storage.list(`entity:${selectedRegion}:`);
-    if (existing && existing.keys && existing.keys.length > 0) {
-      console.log("Data already exists for", selectedRegion);
-      return;
-    }
+    const existingEntities = await Storage.entities(selectedRegion).list();
+if (existingEntities.length > 0) {
+  console.log("Data already exists for", selectedRegion);
+  return;
+}
 
     // Seed data based on region
     const sampleData = {
@@ -1891,17 +1875,8 @@ function ClaudeChatInterface({ selectedRegion, currentUser, onRequireAuth }) {
 async function searchLocalEntities(query, region) {
     // Load entities from storage
     try {
-      const result = await window.storage.list(`entity:${region}:`);
-      const entities = [];
-
-      if (result && result.keys) {
-        for (const key of result.keys) {
-          const entityResult = await window.storage.get(key);
-          if (entityResult) {
-            entities.push(JSON.parse(entityResult.value));
-          }
-        }
-      }
+      const entities = await Storage.entities(region).list();
+      // already loaded as array by Storage.entities().list()
 
       // Simple matching logic
       const queryLower = query.toLowerCase();
@@ -2088,8 +2063,7 @@ If you find nothing in ${region}, return an empty array [].`,
       };
 
       // Save to user bookmarks
-      const bookmarkKey = `bookmark:${currentUser.email}:${entity.id}`;
-      await window.storage.set(bookmarkKey, JSON.stringify(bookmark));
+      await Storage.bookmarks(currentUser.email).set(entity.id, bookmark);
 
       // Close the modal
       setSelectedEntity(null);

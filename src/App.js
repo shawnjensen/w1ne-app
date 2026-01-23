@@ -19,75 +19,6 @@ import {
   Globe,
 } from "lucide-react";
 
-// ────────────────────────────────────────────────
-// Storage helper – makes all localStorage calls cleaner and safer
-// ────────────────────────────────────────────────
-
-const Storage = {
-  // Generic prefix-based operations
-  prefix(base) {
-    return {
-      async list() {
-        const result = await window.storage.list(base);
-        const items = [];
-        for (const key of result?.keys || []) {
-          const val = await window.storage.get(key);
-          if (val?.value) {
-            try {
-              items.push(JSON.parse(val.value));
-            } catch (err) {
-              console.warn(`Failed to parse storage item ${key}:`, err);
-            }
-          }
-        }
-        return items;
-      },
-
-      async get(fullKey) {
-        const val = await window.storage.get(fullKey);
-        return val?.value ? JSON.parse(val.value) : null;
-      },
-
-      async set(fullKey, data) {
-        await window.storage.set(fullKey, JSON.stringify(data));
-      },
-
-      async delete(fullKey) {
-        await window.storage.delete(fullKey);
-      },
-    };
-  },
-
-  // Specific domains
-  entities(country) {
-    return this.prefix(`entity:${country}:`);
-  },
-
-  videos() {
-    return this.prefix("video:");
-  },
-
-  bookmarks(email) {
-    return this.prefix(`bookmark:${email}:`);
-  },
-
-  conversations() {
-    return this.prefix("conversation:");
-  },
-
-  // Quick helpers for common patterns
-  async getEntity(country, id) {
-    return this.entities(country).get(`entity:${country}:${id}`);
-  },
-
-  async saveEntity(country, id, data) {
-    return this.entities(country).set(`entity:${country}:${id}`, data);
-  },
-
-  async deleteEntity(country, id) {
-    return this.entities(country).delete(`entity:${country}:${id}`);
-  },
-};
 
 // ────────────────────────────────────────────────
 // Reusable pieces for showing wine places (entities)
@@ -505,9 +436,6 @@ function Header({
   onNavigate,
   currentView,
 }) {
-  const logoUrl =
-    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="; // Placeholder
-
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -590,180 +518,6 @@ function Header({
   );
 }
 
-function LandingPage({ onStartChat }) {
-  return (
-    <div className="pt-24 pb-20">
-      {/* Hero Section */}
-      <section className="max-w-5xl mx-auto px-6 py-20 text-center">
-        <h1 className="text-7xl font-black mb-6 tracking-tight leading-tight">
-          Find Wine.
-          <br />
-          <span className="gradient-text">Ask W1NE.</span>
-        </h1>
-        <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-          Discover wine, anywhere.
-        </p>
-
-        <button
-          onClick={onStartChat}
-          className="px-8 py-4 bg-black text-white rounded-2xl text-lg font-semibold hover:bg-gray-800 transition hover-lift inline-flex items-center gap-3"
-        >
-          <MessageCircle className="w-5 h-5" />
-          Ask W1NE
-        </button>
-      </section>
-
-      {/* How It Works */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <h2 className="text-4xl font-bold text-center mb-16">How It Works</h2>
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="text-center p-8 bg-gray-50 rounded-3xl hover-lift">
-            <div className="w-16 h-16 bg-black text-white rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-bold">
-              1
-            </div>
-            <h3 className="text-xl font-bold mb-3">Chat with W1NE</h3>
-            <p className="text-gray-600">
-              "I want a wine bar in Zurich that serves natural Pinot Noir"
-            </p>
-          </div>
-
-          <div className="text-center p-8 bg-gray-50 rounded-3xl hover-lift">
-            <div className="w-16 h-16 bg-black text-white rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-bold">
-              2
-            </div>
-            <h3 className="text-xl font-bold mb-3">Get Smart Matches</h3>
-            <p className="text-gray-600">
-              W1NE finds the perfect spots based on your exact preferences
-            </p>
-          </div>
-
-          <div className="text-center p-8 bg-gray-50 rounded-3xl hover-lift">
-            <div className="w-16 h-16 bg-black text-white rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-bold">
-              3
-            </div>
-            <h3 className="text-xl font-bold mb-3">Save & Go</h3>
-            <p className="text-gray-600">
-              Bookmark places and wines you love. Go explore in real life.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-200 bg-gray-50 py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="text-2xl font-black mb-4">W1NE</h3>
-              <p className="text-sm text-gray-600">
-                Discover wine, anywhere. Powered by AI, trusted by wine lovers.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>
-                  <a href="#discover" className="hover:text-black transition">
-                    Discover
-                  </a>
-                </li>
-                <li>
-                  <a href="#winetube" className="hover:text-black transition">
-                    Winetube
-                  </a>
-                </li>
-                <li>
-                  <a href="#features" className="hover:text-black transition">
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a href="#pricing" className="hover:text-black transition">
-                    Pricing
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>
-                  <a href="#about" className="hover:text-black transition">
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a href="#blog" className="hover:text-black transition">
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#careers" className="hover:text-black transition">
-                    Careers
-                  </a>
-                </li>
-                <li>
-                  <a href="#contact" className="hover:text-black transition">
-                    Contact
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>
-                  <a href="#privacy" className="hover:text-black transition">
-                    Privacy
-                  </a>
-                </li>
-                <li>
-                  <a href="#terms" className="hover:text-black transition">
-                    Terms
-                  </a>
-                </li>
-                <li>
-                  <a href="#cookies" className="hover:text-black transition">
-                    Cookies
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-600">
-              © 2025 W1NE. All rights reserved.
-            </p>
-            <div className="flex gap-6">
-              <a
-                href="#twitter"
-                className="text-gray-600 hover:text-black transition text-sm"
-              >
-                Twitter
-              </a>
-              <a
-                href="#instagram"
-                className="text-gray-600 hover:text-black transition text-sm"
-              >
-                Instagram
-              </a>
-              <a
-                href="#facebook"
-                className="text-gray-600 hover:text-black transition text-sm"
-              >
-                Facebook
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-}
 
 // ADMIN DASHBOARD COMPONENT GOES HERE
 
@@ -790,7 +544,7 @@ function AdminDashboard({ currentUser, onRequireAuth }) {
       return;
     }
     loadData();
-  }, [tab]);
+  }, [tab, currentUser, loadData]);
 
   async function loadData() {
     setLoading(true);
@@ -883,7 +637,7 @@ function AdminDashboard({ currentUser, onRequireAuth }) {
   }
 
   async function handleDeleteVideo(videoId) {
-    if (!confirm("Delete this video permanently?")) return;
+    if (!window.confirm("Delete this video permanently?")) return;
     await window.storage.delete(`video:${videoId}`);
     setVideos((prev) => prev.filter((v) => v.id !== videoId));
   }
@@ -919,7 +673,7 @@ function AdminDashboard({ currentUser, onRequireAuth }) {
   async function handleDeleteEntity(entityId) {
     const entity = entities.find((e) => e.id === entityId);
     if (!entity) return;
-    if (!confirm(`Delete ${entity.name} permanently?`)) return;
+    if (!window.confirm(`Delete ${entity.name} permanently?`)) return;
 
     await window.storage.delete(`entity:${entity.country}:${entityId}`);
     setEntities((prev) => prev.filter((e) => e.id !== entityId));
@@ -1556,7 +1310,7 @@ function BookmarksView({ currentUser, onRequireAuth }) {
   }
 
   async function handleRemoveBookmark(bookmark) {
-    if (!confirm("Remove this bookmark?")) return;
+    if (!window.confirm("Remove this bookmark?")) return;
 
     try {
       await window.storage.delete(
@@ -1672,30 +1426,6 @@ function ClaudeChatInterface({ selectedRegion, currentUser, onRequireAuth }) {
       setConversationHistory(convos);
     } catch (error) {
       console.error("Error loading conversation history:", error);
-    }
-  }
-
-  async function saveConversation() {
-    if (messages.length <= 1) return; // Don't save if only welcome message
-
-    const convoId = currentConversationId || `conversation_${Date.now()}`;
-    const convo = {
-      id: convoId,
-      region: selectedRegion,
-      messages: messages,
-      lastMessageAt: Date.now(),
-      preview: messages[1]?.content?.slice(0, 60) || "New conversation",
-    };
-
-    try {
-      await window.storage.set(
-        `conversation:${convoId}`,
-        JSON.stringify(convo)
-      );
-      setCurrentConversationId(convoId);
-      loadConversationHistory();
-    } catch (error) {
-      console.error("Error saving conversation:", error);
     }
   }
 
@@ -1888,191 +1618,6 @@ function ClaudeChatInterface({ selectedRegion, currentUser, onRequireAuth }) {
   }
 }
   
-async function searchLocalEntities(query, region) {
-    // Load entities from storage
-    try {
-      const result = await window.storage.list(`entity:${region}:`);
-      const entities = [];
-
-      if (result && result.keys) {
-        for (const key of result.keys) {
-          const entityResult = await window.storage.get(key);
-          if (entityResult) {
-            entities.push(JSON.parse(entityResult.value));
-          }
-        }
-      }
-
-      // Simple matching logic
-      const queryLower = query.toLowerCase();
-      return entities.filter(
-        (e) =>
-          e.name?.toLowerCase().includes(queryLower) ||
-          e.address?.toLowerCase().includes(queryLower) ||
-          e.type?.toLowerCase().includes(queryLower) ||
-          e.specialties?.some((s) => s.toLowerCase().includes(queryLower)) ||
-          e.about?.toLowerCase().includes(queryLower)
-      );
-    } catch (error) {
-      console.error("Local search error:", error);
-      return [];
-    }
-  }
-
-  async function searchWithClaudeAndAdd(query, region) {
-    try {
-      // Call Claude API with web search tool
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 2000,
-          messages: [
-            {
-              role: "user",
-              content: `IMPORTANT: The user is in ${region}. Find wine bars, wine shops, or wine-related places in ${region} matching this query: "${query}". 
-            
-ONLY return results for ${region} unless the user explicitly mentions another location.
-
-For EACH place you find, you MUST extract:
-1. Business name
-2. Full address (including city and ${region})
-3. Type (wine-bar, retailer, restaurant, winery)
-4. Description
-5. Specialties/features
-6. Contact info (phone, email)
-7. **WEBSITE URL** (the main website homepage - CRITICAL)
-8. **IMAGE URLs** (find 1-3 high quality images of the place from the web)
-
-Search the web thoroughly and extract the website URL and image URLs from search results.
-
-Return ONLY a JSON array (no markdown, no explanation). Each place MUST have this exact structure:
-
-[{
-  "name": "Business Name",
-  "address": "Full address with city, ${region}",
-  "type": "wine-bar",
-  "about": "Description",
-  "specialties": ["natural", "organic"],
-  "contact": {
-    "phone": "+XX XXX XXX XXXX",
-    "email": "email@domain.com",
-    "website": "https://example.com"
-  },
-  "websiteUrl": "https://example.com",
-  "imageUrls": [
-    "https://example.com/image1.jpg",
-    "https://example.com/image2.jpg"
-  ]
-}]
-
-CRITICAL: 
-- websiteUrl is the main homepage URL
-- imageUrls should be direct links to actual images (jpg, png, webp)
-- Extract these from web search results
-- If you can't find website or images, use null
-
-If you find nothing in ${region}, return an empty array [].`,
-            },
-          ],
-          tools: [
-            {
-              type: "web_search_20250305",
-              name: "web_search",
-            },
-          ],
-        }),
-      });
-
-      const data = await response.json();
-      console.log("Claude response:", data);
-
-      // Extract text from response
-      let responseText = "";
-      if (data.content) {
-        for (const item of data.content) {
-          if (item.type === "text") {
-            responseText += item.text;
-          }
-        }
-      }
-
-      // Parse JSON from response
-      let places = [];
-      try {
-        // Remove markdown code blocks if present
-        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-          places = JSON.parse(jsonMatch[0]);
-        } else {
-          places = JSON.parse(responseText);
-        }
-      } catch (parseError) {
-        console.error("Failed to parse Claude response:", responseText);
-        return [];
-      }
-
-      // Add each place to our database with web-sourced media
-      const addedEntities = [];
-      for (const place of places) {
-        // Try to download and convert first image to base64 if available
-        // Note: May fail due to CORS, that's okay - we keep the URL
-        let imageData = null;
-        if (place.imageUrls && place.imageUrls.length > 0) {
-          try {
-            // Simple approach: store URL for now, actual download can be done server-side
-            // For MVP, we'll just use the imageUrls directly
-            imageData = null; // Skip base64 conversion to avoid CORS issues
-          } catch (imgError) {
-            console.log("Could not fetch image:", imgError);
-          }
-        }
-
-        const entity = {
-          id: `entity_${region}_${Date.now()}_${Math.random()
-            .toString(36)
-            .substr(2, 9)}`,
-          name: place.name,
-          slug: place.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-          type: place.type || "retailer",
-          address: place.address,
-          lat: null, // Could geocode later
-          lng: null,
-          country: region,
-          about: place.about || "",
-          specialties: place.specialties || [],
-          contact: place.contact || {},
-          websiteUrl: place.websiteUrl || place.contact?.website || null,
-          imageUrls: place.imageUrls || [],
-          imageData: imageData, // Will be null for now due to CORS
-          imageUrl:
-            place.imageUrls && place.imageUrls[0] ? place.imageUrls[0] : null, // Use first URL directly
-          isPaid: false,
-          verified: false,
-          addedBy: "claude-ai",
-          addedAt: Date.now(),
-          webSourced: true, // Flag to indicate this came from web search
-        };
-
-        // Save to storage
-        await window.storage.set(
-          `entity:${region}:${entity.id}`,
-          JSON.stringify(entity)
-        );
-
-        addedEntities.push(entity);
-      }
-
-      return addedEntities;
-    } catch (error) {
-      console.error("Claude API error:", error);
-      return [];
-    }
-  }
-
   async function handleBookmark(entity, type) {
     if (!currentUser) {
       onRequireAuth();
